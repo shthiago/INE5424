@@ -63,7 +63,6 @@ public:
 
     void suspend(T * obj) {
         db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() << "]::suspend(" << obj << ")" << endl;
-
         Base::remove(obj->link());
     }
 

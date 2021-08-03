@@ -173,9 +173,10 @@ public:
     static const bool preemptive = true;
 
 public:
-    RM(int p = APERIODIC): Real_Time_Scheduler_Common(p) {}
+    template <typename ... Tn>
+    RM(int p = APERIODIC, Tn & ... an): Priority(p) {};
     RM(const Microsecond & d, const Microsecond & p = SAME, const Microsecond & c = UNKNOWN, unsigned int cpu = ANY)
-    : Real_Time_Scheduler_Common(p ? p : d, d, p, c) {}
+    : Priority(p ? p : d, d, p, c) {}
 };
 
 // Deadline Monotonic

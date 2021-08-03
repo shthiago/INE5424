@@ -224,6 +224,8 @@ void Thread::exit(int status)
     db<Thread>(TRC) << "Thread::exit(status=" << status << ") [running=" << running() << "]" << endl;
 
     Thread * prev = running();
+    OStream cout;
+    cout << "Destroying: ";
     _scheduler.remove(prev);
     prev->_state = FINISHING;
     *reinterpret_cast<int *>(prev->_stack) = status;

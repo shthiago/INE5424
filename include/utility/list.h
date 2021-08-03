@@ -3,6 +3,7 @@
 #ifndef __list_h
 #define __list_h
 
+#include "string.h"
 #include <system/config.h>
 
 __BEGIN_UTIL
@@ -914,6 +915,25 @@ public:
                        << ",n=" << (e ? e->next() : (void *) -1)
                        << "}" << endl;
 
+        OStream cout;
+        switch (e->rank()) {
+            case 100 * 1000:
+                cout << "Scheduling: Task 1" << endl;
+                break;
+            case 80 * 1000:
+                cout << "Scheduling: Task 2" << endl;
+                break;
+            case 60 * 1000:
+                cout << "Scheduling: Task 3" << endl;
+                break;
+            case 40 * 1000:
+                cout << "Scheduling: Task 4" << endl;
+                break;
+            case 20 * 1000:
+                cout << "Scheduling: Task 5" << endl;
+                break;
+        }
+
         if(empty())
             insert_first(e);
         else {
@@ -942,6 +962,26 @@ public:
     Element * remove() {
         db<Lists>(TRC) << "Ordered_List::remove()" << endl;
         Element * e = Base::remove_head();
+
+        OStream cout;
+        switch (e->rank()) {
+            case 100 * 1000:
+                cout << "Waking: Task 1" << endl;
+                break;
+            case 80 * 1000:
+                cout << "Waking: Task 2" << endl;
+                break;
+            case 60 * 1000:
+                cout << "Waking: Task 3" << endl;
+                break;
+            case 40 * 1000:
+                cout << "Waking: Task 4" << endl;
+                break;
+            case 20 * 1000:
+                cout << "Waking: Task 5" << endl;
+                break;
+        }
+
         if(e && relative && e->next())
             e->next()->rank(e->next()->rank() + e->rank());
         return e;
@@ -1051,10 +1091,81 @@ public:
                        << ",n=" << (e ? e->next() : (void *) -1)
                        << "}" << endl;
 
-        if(e == _chosen)
+        OStream cout;
+        if (e == _chosen) {
+            switch (e->rank()) {
+                case 100 * 1000:
+                    cout << "Task 1" << endl;
+                    break;
+                case 80 * 1000:
+                    cout << "Task 2" << endl;
+                    break;
+                case 60 * 1000:
+                    cout << "Task 3" << endl;
+                    break;
+                case 40 * 1000:
+                    cout << "Task 4" << endl;
+                    break;
+                case 20 * 1000:
+                    cout << "Task 5" << endl;
+                    break;
+                default:
+                    cout << "some task" << endl;
+            }
             _chosen = Base::remove_head();
-        else
+            cout << "\n----------------------------------------" << endl;
+            if (_chosen->rank() == 2147483647)
+                cout << "Chosen (rank): IDLE" << endl;
+            else
+                cout << "Chosen (rank): " << _chosen->rank() << endl;
+
+            Element *a;
+            for (a = head(); a; a = a->next()) {
+                assert(_chosen->rank() < a->rank());
+                if (a->rank() == 2147483647)
+                    cout << "Not chosen (rank): IDLE" << endl;
+                else
+                    cout << "Not chosen (rank): " << a->rank() << endl;
+            }
+            cout << "----------------------------------------\n" << endl;
+
+            switch (_chosen->rank()) {
+                case 100 * 1000:
+                    cout << "Executing: Task 1" << endl;
+                    break;
+                case 80 * 1000:
+                    cout << "Executing: Task 2" << endl;
+                    break;
+                case 60 * 1000:
+                    cout << "Executing: Task 3" << endl;
+                    break;
+                case 40 * 1000:
+                    cout << "Executing: Task 4" << endl;
+                    break;
+                case 20 * 1000:
+                    cout << "Executing: Task 5" << endl;
+                    break;
+            }
+        } else {
             e = Base::remove(e);
+            switch (e->rank()) {
+                case 100 * 1000:
+                    cout << "Task 1" << endl;
+                    break;
+                case 80 * 1000:
+                    cout << "Task 2" << endl;
+                    break;
+                case 60 * 1000:
+                    cout << "Task 3" << endl;
+                    break;
+                case 40 * 1000:
+                    cout << "Task 4" << endl;
+                    break;
+                case 20 * 1000:
+                    cout << "Task 5" << endl;
+                    break;
+            }
+        }
 
         return e;
     }
@@ -1065,6 +1176,41 @@ public:
         if(!empty()) {
             Base::insert(_chosen);
             _chosen = Base::remove_head();
+        }
+
+        OStream cout;
+        cout << "\n----------------------------------------" << endl;
+        if (_chosen->rank() == 2147483647)
+            cout << "Chosen (rank): IDLE" << endl;
+        else
+            cout << "Chosen (rank): " << _chosen->rank() << endl;
+
+        Element *a;
+        for (a = head(); a; a = a->next()) {
+            assert(_chosen->rank() < a->rank());
+            if (a->rank() == 2147483647)
+                cout << "Not chosen (rank): IDLE" << endl;
+            else
+                cout << "Not chosen (rank): " << a->rank() << endl;
+        }
+        cout << "----------------------------------------\n" << endl;
+
+        switch (_chosen->rank()) {
+            case 100 * 1000:
+                cout << "Executing: Task 1" << endl;
+                break;
+            case 80 * 1000:
+                cout << "Executing: Task 2" << endl;
+                break;
+            case 60 * 1000:
+                cout << "Executing: Task 3" << endl;
+                break;
+            case 40 * 1000:
+                cout << "Executing: Task 4" << endl;
+                break;
+            case 20 * 1000:
+                cout << "Executing: Task 5" << endl;
+                break;
         }
 
         return _chosen;
@@ -1355,6 +1501,26 @@ public:
         return e;
     }
 
+    // E6b
+    Element * search_best_fit(unsigned int s) {
+        Element * e;
+        Element * bf = nullptr;  // Best-fit
+        if (sizeof(Object_Type) < sizeof(Element)) {
+            for (e = head(); e; e = e->next()) {
+                if ((e->size() >= sizeof(Element) / sizeof(Object_Type) + s) || (e->size() == s))
+                    if (bf == nullptr || bf->size() > e->size())
+                        bf = e;
+            }
+        } else {
+            for (e = head(); e; e = e->next()) {
+                if (e->size() >= s)
+                    if (bf == nullptr || bf->size() > e->size())
+                        bf = e;
+            }
+        }
+        return bf;
+    }
+
     void insert_merging(Element * e, Element ** m1, Element ** m2) {
         db<Lists>(TRC) << "Grouping_List::insert_merging(e=" << e << ")" << endl;
 
@@ -1381,7 +1547,8 @@ public:
         print_head();
         print_tail();
 
-        Element * e = search_size(s);
+        // E6b
+        Element * e = search_best_fit(s);
         if(e) {
             e->shrink(s);
             _grouped_size -= s;

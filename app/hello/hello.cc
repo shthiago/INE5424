@@ -1,12 +1,18 @@
-#include <utility/ostream.h>
+// EPOS Test Program
 
 using namespace EPOS;
 
-OStream cout;
+// E6b
+int main() {
+    OStream cout;
 
-int main()
-{
-    cout << "Hello world!" << endl;
+    char * test = (char *) malloc(262044 * sizeof(char));
+
+    cout << "Cleaning up the mess..." << endl;
+
+    free(test);
+
+    cout << "I'm done, bye!" << endl;
 
     return 0;
 }
