@@ -174,9 +174,9 @@ public:
 
 public:
     template <typename ... Tn>
-    RM(int p = APERIODIC, Tn & ... an): Priority(p) {};
+    RM(int p = APERIODIC, Tn & ... an): Real_Time_Scheduler_Common(p) {};
     RM(const Microsecond & d, const Microsecond & p = SAME, const Microsecond & c = UNKNOWN, unsigned int cpu = ANY)
-    : Priority(p ? p : d, d, p, c) {}
+    : Real_Time_Scheduler_Common(p ? p : d, d, p, c) {}
 };
 
 // Deadline Monotonic
