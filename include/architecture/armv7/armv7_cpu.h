@@ -40,7 +40,9 @@ public:
     static Reg32 fr() { Reg32 r; ASM("mov %0, r0" : "=r"(r)); return r; }
     static void fr(Reg32 fr) {   ASM("mov r0, %0" : : "r"(fr) : "r0"); }
 
+    // retorna end do page dir atual
     static Reg32 pdp() { return 0; }
+    // muda end do page dir atual
     static void pdp(Reg32 pdp) {}
 
     // Atomic operations

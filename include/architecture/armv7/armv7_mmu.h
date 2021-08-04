@@ -120,7 +120,7 @@ public:
         }
 
         
-        // remapeia um segmento de memoria continuo para entradas de pt
+        // remapeia um segmento de memoria continuo para entradas de pt, esse segmento começa em addr
         void remap(Phy_Addr addr, int from, int to, Page_Flags flags) {
             // alinha o endereço base da memoria alocada
             addr = align_page(addr);
@@ -145,6 +145,7 @@ public:
         }
 
         // utilizado para imprimir entradas de uma tabela(acho)
+        // TODO: checar
         friend OStream & operator<<(OStream & os, Page_Table & pt) {
             os << "{\n";
             int brk = 0;
@@ -162,15 +163,174 @@ public:
         PT_Entry _entry[PT_ENTRIES]; // the Phy_Addr in each entry passed through phy2pte()
     };
 
+    // Chunk (for Segment)
+    // abstrai um segmento de memoria
+    class Chunk
+    {
+    public:
+        Chunk() {}
+
+        Chunk(unsigned int bytes, Flags flags, Color color = WHITE)
+        : _from(0),
+          _to(pages(bytes)), // numero de pag necessarias para enderecar n bytes
+          _pts(page_tables(_to - _from)), // numero de pag tables necessarias para enderecar n paginas
+          _flags(Page_Flags(flags)), // flags do segmento
+          _pt(calloc(_pts, WHITE)) // cria page table no qual esse segmento é mapeado
+        {
+            // n achei exatamente o que seriam as flags do ARMv7 que indicam mapeamento continuo.
+            // sendo assim só deixei a opção de usar map para mapeamento de pags
+            _pt->map(_from, _to, _flags, color)
+        }
+
+        Chunk(Phy_Addr phy_addr, unsigned int bytes, Flags flags)
+        : _from(0),
+          _to(pages(bytes)), // numero de pag necessarias para enderecar n bytes
+          _pts(page_tables(_to - _from)), // numero de pag tables necessarias para enderecar n paginas
+          _flags(Page_Flags(flags)), // flags do segmento
+          _pt(calloc(_pts, WHITE)) // cria page table no qual esse segmento é mapeado
+        {
+            // mapeia um segmento de memória que começa em phy_addr, e tem n bytes de tamanho
+            _pt->remap(phy_addr, _from, _to, flags);
+        }
+
+        // parece apenas criar uma estrutura Chunk para uma região que já foi mapeada. pt deve conter o end
+        // do segmento que foi mapeado.
+        Chunk(Phy_Addr pt, unsigned int from, unsigned int to, Flags flags)
+        : _from(from),
+          _to(to),
+          _pts(page_tables(_to - _from)),
+          _flags(flags),
+          _pt(pt) {}
+
+        ~Chunk() {
+            // n tem flag para IO nem CT nessa implementacao
+            for( ; _from < _to; _from++)
+                free((*_pt)[_from]);
+            free(_pt, _pts);
+        }
+
+        unsigned int pts() const { return _pts; }
+        Page_Flags flags() const { return _flags; }
+        Page_Table * pt() const { return _pt; }
+        unsigned int size() const { return (_to - _from) * sizeof(Page); }
+
+        
+        // n tendi
+        Phy_Addr phy_address() const {
+            return (_flags & Page_Flags::CT) ? Phy_Addr(indexes((*_pt)[_from])) : Phy_Addr(false);
+        }
+
+        // atualiza o tamanho de um chunk; para isso altera as entradas na pte que se referem a ele
+        int resize(unsigned int amount) {
+
+            unsigned int pgs = pages(amount);
+
+            Color color = colorful ? phy2color(_pt) : WHITE;
+
+            unsigned int free_pgs = _pts * PT_ENTRIES - _to;
+            if(free_pgs < pgs) { // resize _pt
+                unsigned int pts = _pts + page_tables(pgs - free_pgs);
+                Page_Table * pt = calloc(pts, color);
+                memcpy(phy2log(pt), phy2log(_pt), _pts * sizeof(Page));
+                free(_pt, _pts);
+                _pt = pt;
+                _pts = pts;
+            }
+            _pt->map(_to, _to + pgs, _flags, color);
+            _to += pgs;
+
+            return pgs * sizeof(Page);
+        }
+
+    private:
+        unsigned int _from;
+        unsigned int _to;
+        unsigned int _pts;
+        Page_Flags _flags; // flags das paginas que compoe esse segmento de memoria
+        Page_Table * _pt; // this is a physical address
+    };
 
     // Page Directory
-    class Page_Directory;
-
-    // Chunk (for Segment)
-    class Chunk;
+    typedef Page_Table Page_Directory;
 
     // Directory (for Address_Space)
-    class Directory;
+    class Directory
+    {
+    public:
+        Directory() : _pd(calloc(1, WHITE)), _free(true) {
+            for(unsigned int i = directory(PHY_MEM); i < PD_ENTRIES; i++)
+                (*_pd)[i] = (*_master)[i];
+        }
+
+        Directory(Page_Directory * pd) : _pd(pd), _free(false) {}
+
+        ~Directory() { if(_free) free(_pd); }
+
+        Phy_Addr pd() const { return _pd; }
+
+        // ativa o address space representado por essa tabela de diretorio
+        void activate() const { CPU::pdp(pd()); }
+
+        // 'atacha' segmento de memoria a esse address space
+        Log_Addr attach(const Chunk & chunk, unsigned int from = directory(APP_LOW)) {
+            for(unsigned int i = from; i < PD_ENTRIES; i++)
+                if(attach(i, chunk.pt(), chunk.pts(), chunk.flags()))
+                    return i << DIRECTORY_SHIFT;
+            return Log_Addr(false);
+        }
+
+        Log_Addr attach(const Chunk & chunk, Log_Addr addr) {
+            unsigned int from = directory(addr);
+            if(attach(from, chunk.pt(), chunk.pts(), chunk.flags()))
+                return from << DIRECTORY_SHIFT;
+            return Log_Addr(false);
+        }
+
+        void detach(const Chunk & chunk) {
+            for(unsigned int i = 0; i < PD_ENTRIES; i++) {
+                if(indexes(pte2phy((*_pd)[i])) == indexes(chunk.pt())) {
+                    detach(i, chunk.pt(), chunk.pts());
+                    return;
+                }
+            }
+            db<MMU>(WRN) << "MMU::Directory::detach(pt=" << chunk.pt() << ") failed!" << endl;
+        }
+
+        void detach(const Chunk & chunk, Log_Addr addr) {
+            unsigned int from = directory(addr);
+            if(indexes(pte2phy((*_pd)[from])) != indexes(chunk.pt())) {
+                db<MMU>(WRN) << "MMU::Directory::detach(pt=" << chunk.pt() << ",addr=" << addr << ") failed!" << endl;
+                return;
+            }
+            detach(from, chunk.pt(), chunk.pts());
+        }
+
+        Phy_Addr physical(Log_Addr addr) {
+            PD_Entry pde = (*_pd)[directory(addr)];
+            Page_Table * pt = static_cast<Page_Table *>(pde2phy(pde));
+            PT_Entry pte = pt->log()[page(addr)];
+            return pte | offset(addr);
+        }
+
+    private:
+        bool attach(unsigned int from, const Page_Table * pt, unsigned int n, Page_Flags flags) {
+            for(unsigned int i = from; i < from + n; i++)
+                if(_pd->log()[i])
+                    return false;
+            for(unsigned int i = from; i < from + n; i++, pt++)
+                _pd->log()[i] = phy2pde(Phy_Addr(pt));
+            return true;
+        }
+
+        void detach(unsigned int from, const Page_Table * pt, unsigned int n) {
+            for(unsigned int i = from; i < from + n; i++)
+                _pd->log()[i] = 0;
+        }
+
+    private:
+        Page_Directory * _pd;  // this is a physical address, but operator*() returns a logical address
+        bool _free;
+    };
 
     // DMA_Buffer
     class DMA_Buffer;
