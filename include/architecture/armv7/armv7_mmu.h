@@ -7,6 +7,9 @@
 #include <system/memory_map.h>
 
 __BEGIN_SYS
+// 12 bits para codificar 4096(2**12) entradas na pd
+// 8 bits para codificar 256(2**8) entradas nas pts
+// 12 bits para endereçar 4096(2**12) bytes nas paginas
 
 class ARMv7_MMU: public MMU_Common<12, 8, 12>
 {
@@ -89,33 +92,50 @@ public:
     public:
         Page_Table() {}
 
+        // retorna um indice na tab de pags
         PT_Entry & operator[](unsigned int i) { return _entry[i]; }
+        // retorna o end logico dessa tabela de pag
         Page_Table & log() { return *static_cast<Page_Table *>(phy2log(this)); }
 
+        // mapeia uma quantidade (to - from) de paginas nessa tabela
         void map(int from, int to, Page_Flags flags, Color color) {
+            // retorna um ponteiro para a area alocada
             Phy_Addr * addr = alloc(to - from, color);
+            // se for diferente de 0, significa que uma região de memória continua foi alocada
             if(addr)
                 remap(addr, from, to, flags);
+            // se n alocou com sucesso, percorre as tabela
             else
                 for( ; from < to; from++) {
+                    // converte o end de uma entrada da tab de pag para logico
                     Log_Addr * pte = phy2log(&_entry[from]);
+                    // aloca 1 frame(pag), converte o seu end para entrada de pt e armazena na pte obtida na linha anterior
                     *pte = phy2pte(alloc(1, color), flags);
                 }
         }
 
+        // mapeia uma região continua da memória
         void map_contiguous(int from, int to, Page_Flags flags, Color color) {
             remap(alloc(to - from, color), from, to, flags);
         }
 
+        
+        // remapeia um segmento de memoria continuo para entradas de pt
         void remap(Phy_Addr addr, int from, int to, Page_Flags flags) {
+            // alinha o endereço base da memoria alocada
             addr = align_page(addr);
             for( ; from < to; from++) {
+                // converte o end de uma entrada da tab de pag para logico
                 Log_Addr * pte = phy2log(&_entry[from]);
+                // adiciona o end base atual(addr) da memoria alocada na pte obtida na linha anterior
                 *pte = phy2pte(addr, flags);
+                // soma o tamanho de uma pagina ao end base(addr). Isso garante que a memoria alocada seja enderaçada em tamanhos
+                // multiplos do tamanho de uma pagina
                 addr += sizeof(Page);
             }
         }
 
+        // libera entradas da tab de pags
         void unmap(int from, int to) {
             for( ; from < to; from++) {
                 free(_entry[from]);
@@ -124,6 +144,7 @@ public:
             }
         }
 
+        // utilizado para imprimir entradas de uma tabela(acho)
         friend OStream & operator<<(OStream & os, Page_Table & pt) {
             os << "{\n";
             int brk = 0;
