@@ -47,8 +47,8 @@ public:
             PRIVILED_ACCESS_ONLY = 1 << 4,
             NO_USER_MODE_WRITE = 1 << 5,
             FULL_ACCESS = (1 << 4) | (1 << 5),
-            PRIVILEGED_READ_ONLY = (1 << 9) | (1 << 4)),
-            READ_ONLY = (1 << 9) | (1 << 5)),
+            PRIVILEGED_READ_ONLY = (1 << 9) | (1 << 4),
+            READ_ONLY = (1 << 9) | (1 << 5),
             // conjuntos de flags q implementam mem_types
             STRONGLY_ORDERED = 0,
             SHAREABLE_DEVICE = B | XN,
@@ -57,7 +57,7 @@ public:
             NORMAL_3 = 1 << 6, // Outer and Inner non-cacheable
             NON_SHAREABLE_DEVICE = (1 << 7) | XN, // Outer and Inner non-cacheable
             // Mascara para ajudar a limpar o campo de flags de uma PTE
-            MASK_PTE = (1 << 12) - 1
+            MASK_PTE = (1 << 12) - 1,
             // Mascara para ajudar a limpar o campo de flags de uma PDE
             MASK_PDE = (1 << 10) - 1
         };
@@ -67,7 +67,7 @@ public:
         // converte um inteiro para uma flag específica
         Page_Flags(unsigned int f) : _flags(f) {}
         // converte uma flag da MMU_Common para uma flag das págs da arquitetura
-        Page_Flags(Flags f) : _flags(V |
+        Page_Flags(Flags f) : _flags(P |
                                      ((f & Flags::RD)  ? 0 : 0) |
                                      ((f & Flags::RW)  ? RW_UMPREV : 0) |
                                      ((f & Flags::EX)  ? 0 : XN)|
@@ -76,7 +76,7 @@ public:
                                      ((f & Flags::CD)  ? NORMAL_3 : 0) |
                                      ((f & Flags::CT)  ? 0 : 0) |
                                      ((f & Flags::IO)  ? 0 : 0) |
-                                     ((F & Flags::SYS) ? APX : 0)) {}
+                                     ((f & Flags::SYS) ? APX : 0)) {}
 
         operator unsigned int() const { return _flags; }
 
@@ -179,7 +179,7 @@ public:
         {
             // n achei exatamente o que seriam as flags do ARMv7 que indicam mapeamento continuo.
             // sendo assim só deixei a opção de usar map para mapeamento de pags
-            _pt->map(_from, _to, _flags, color)
+            _pt->map(_from, _to, _flags, color);
         }
 
         Chunk(Phy_Addr phy_addr, unsigned int bytes, Flags flags)
@@ -217,7 +217,7 @@ public:
         
         // n tendi
         Phy_Addr phy_address() const {
-            return (_flags & Page_Flags::CT) ? Phy_Addr(indexes((*_pt)[_from])) : Phy_Addr(false);
+            return (_flags & Flags::CT) ? Phy_Addr(indexes((*_pt)[_from])) : Phy_Addr(false);
         }
 
         // atualiza o tamanho de um chunk; para isso altera as entradas na pte que se referem a ele
@@ -364,7 +364,7 @@ public:
     // Considera q o end fisico esta alinhado corretamente
     static PD_Entry phy2pde(Phy_Addr frame) { return frame | (1 << 9) | (1 << 0); }
     // converte end de pde(page directory entry) para fisico
-    static Phy_Addr pde2phy(PD_Entry entry); { return entry & ~Page_Flags::MASK_PDE; }
+    static Phy_Addr pde2phy(PD_Entry entry) { return entry & ~Page_Flags::MASK_PDE; }
 
     static void flush_tlb();
     static void flush_tlb(Log_Addr addr);
