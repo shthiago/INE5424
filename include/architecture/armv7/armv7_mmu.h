@@ -342,18 +342,66 @@ public:
     ARMv7_MMU() {}
 
     // aloca uma quantidade especifica de frames
-    static Phy_Addr alloc(unsigned int frames = 1, Color color = WHITE);
+    static Phy_Addr alloc(unsigned int frames = 1, Color color = WHITE) {
+        Phy_Addr phy(false);
+
+        if(frames) {
+            List::Element * e = _free[color].search_decrementing(frames);
+            if(e) {
+                phy = e->object() + e->size();
+                db<MMU>(TRC) << "MMU::alloc(frames=" << frames << ",color=" << color << ") => " << phy << endl;
+            } else
+                if(colorful)
+                    db<MMU>(INF) << "MMU::alloc(frames=" << frames << ",color=" << color << ") => failed!" << endl;
+                else
+                    db<MMU>(WRN) << "MMU::alloc(frames=" << frames << ",color=" << color << ") => failed!" << endl;
+        }
+
+        return phy;
+    }
     // zera e aloca uma quantidade especifica de frames
-    static Phy_Addr calloc(unsigned int frames = 1, Color color = WHITE);
+    static Phy_Addr calloc(unsigned int frames = 1, Color color = WHITE) {
+        Phy_Addr phy = alloc(frames, color);
+        memset(phy2log(phy), 0, sizeof(Frame) * frames);
+        return phy;
+    }
     // adiciona o espaço ocupado por n frames de volta a lista de mem livre
-    static void free(Phy_Addr frame, int n = 1);
-    static void white_free(Phy_Addr frame, int n);
-    static unsigned int allocable(Color color = WHITE);
+    static void free(Phy_Addr frame, int n = 1) {
+        // Clean up MMU flags in frame address
+        frame = indexes(frame);
+        Color color = colorful ? phy2color(frame) : WHITE;
+
+        db<MMU>(TRC) << "MMU::free(frame=" << frame << ",color=" << color << ",n=" << n << ")" << endl;
+
+        if(frame && n) {
+            List::Element * e = new (phy2log(frame)) List::Element(frame, n);
+            List::Element * m1, * m2;
+            _free[color].insert_merging(e, &m1, &m2);
+        }
+    }
+    static void white_free(Phy_Addr frame, int n) {
+        // Clean up MMU flags in frame address
+        frame = indexes(frame);
+
+        db<MMU>(TRC) << "MMU::free(frame=" << frame << ",color=" << WHITE << ",n=" << n << ")" << endl;
+
+        if(frame && n) {
+            List::Element * e = new (phy2log(frame)) List::Element(frame, n);
+            List::Element * m1, * m2;
+            _free[WHITE].insert_merging(e, &m1, &m2);
+        }
+    }
+    static unsigned int allocable(Color color = WHITE) { return _free[color].head() ? _free[color].head()->size() : 0; }
 
     // retorna a tabela de dir atual
-    static Page_Directory * volatile current();
+    static Page_Directory * volatile current() { return reinterpret_cast<Page_Directory * volatile>(CPU::pdp()); }
     // retorna a traducao completa de um end logico para fisico
-    static Phy_Addr physical(Log_Addr addr);
+    // TODO adapt to 1MB pages if we need to modify
+    static Phy_Addr physical(Log_Addr addr) {
+        Page_Directory * pd = current();
+        Page_Table * pt = pd->log()[directory(addr)];
+        return pt->log()[page(addr)] | offset(addr);
+    }
     // converte end físico para pte, aplicando as flags passadas como parametro. Considera que o end fisico está alinhado corretamente
     static PT_Entry phy2pte(Phy_Addr frame, Page_Flags flags) { return frame | flags; }
     // converte end de pte(page table entry) para fisico
@@ -366,17 +414,17 @@ public:
     // converte end de pde(page directory entry) para fisico
     static Phy_Addr pde2phy(PD_Entry entry) { return entry & ~Page_Flags::MASK_PDE; }
 
-    static void flush_tlb();
-    static void flush_tlb(Log_Addr addr);
+    static void flush_tlb() { /* TODO */ }
+    static void flush_tlb(Log_Addr addr) { /* TODO */}
 
     //converte end fisico para color
     static Log_Addr phy2log(Phy_Addr phy) { return Log_Addr((MEM_BASE == PHY_MEM) ? phy : (MEM_BASE > PHY_MEM) ? phy - (MEM_BASE - PHY_MEM) : phy + (PHY_MEM - MEM_BASE)); }
     // converte end log para fisico
     static Phy_Addr log2phy(Log_Addr log) { return Phy_Addr((MEM_BASE == PHY_MEM) ? log : (MEM_BASE > PHY_MEM) ? log + (MEM_BASE - PHY_MEM) : log - (PHY_MEM - MEM_BASE)); }
     // converte de end fisico para end log com color
-    static Color phy2color(Phy_Addr phy);
+    static Color phy2color(Phy_Addr phy) { return WHITE ;} // Ever white
     // converte de end log para end log com color
-    static Color log2color(Log_Addr log);
+    static Color log2color(Log_Addr log) { return WHITE; } // Ever white
 
 private:
     static void init();
