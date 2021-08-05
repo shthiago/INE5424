@@ -72,16 +72,25 @@ public:
     static const unsigned int PD_ENTRIES = 1 << DIRECTORY_BITS;
 
 public:
+    // retorna o n de paginas necessarias para alocar n bytes
     static unsigned int pages(unsigned int bytes) { return (bytes + sizeof(Page) - 1) / sizeof(Page); }
+    // retorna o n de page tables necessarias para enderecar n paginas
     static unsigned int page_tables(unsigned int pages) { return sizeof(Page) > sizeof(int) ? (pages + PT_ENTRIES - 1) / PT_ENTRIES : 0; }
 
+    // zera o os campos de indice de um endereco virtual(logico), retornando apenas o valor do campo de offset contido no end
+    // virtual
     static unsigned int offset(const Log_Addr & addr) { return addr & (sizeof(Page) - 1); }
+    // semelhante ao método acima, com a diferença de retornar apenas os campos de indice do end virtual
     static unsigned int indexes(const Log_Addr & addr) { return addr & ~(sizeof(Page) - 1); }
 
+    // retornar o indice de uma entrada de alguma tabela de pag secundaria contida em um end virtual
     static unsigned int page(const Log_Addr & addr) { return (addr >> PAGE_SHIFT) & (PT_ENTRIES - 1); }
+    // retorna o indice de uma entrada na tabela de diretorio contida em um end virtual
     static unsigned int directory(const Log_Addr & addr) { return addr >> DIRECTORY_SHIFT; }
 
+    // alinha um end virtual de pag
     static Log_Addr align_page(const Log_Addr & addr) { return (addr + sizeof(Page) - 1) & ~(sizeof(Page) - 1); }
+    // alinha o end virtual de uma tabela de pag
     static Log_Addr align_directory(const Log_Addr & addr) { return (addr + PT_ENTRIES * sizeof(Page) - 1) &  ~(PT_ENTRIES * sizeof(Page) - 1); }
 };
 
