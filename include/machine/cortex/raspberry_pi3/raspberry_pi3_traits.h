@@ -41,12 +41,12 @@ template<> struct Traits<Machine>: public Traits<Machine_Common>
     static const unsigned int INIT              = NOT_USED; // TO DEFINE
 
     static const unsigned int APP_LOW           = MEM_BASE;
-    static const unsigned int APP_CODE          = VECTOR_TABLE;
-    static const unsigned int APP_DATA          = VECTOR_TABLE;
+    static const unsigned int APP_CODE          = MEM_BASE;
+    static const unsigned int APP_DATA          = 0x00400000;
     static const unsigned int APP_HIGH          = MEM_TOP;
 
     static const unsigned int PHY_MEM           = 0x40000000; // 2 GB
-    static const unsigned int IO                = NOT_USED;     // this machine only supports the library architecture of EPOS
+    static const unsigned int IO                = 0xef7c0000; //  0x40000000 + 2GB
 
     static const unsigned int SYS               = 0xff700000;   // 4 GB - 9 MB
     static const unsigned int SYS_CODE          = 0xff700000;

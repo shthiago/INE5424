@@ -365,29 +365,29 @@ void Setup::build_pmm()
     si->pmm.sys_pd = top_page * sizeof(Page);
 
     // Page tables to map the System address space
-    top_page -= ???;
+    top_page -= MMU::pages((0x0 -1) - Traits<Machine>::SYS); // Desce o número de páginas pra endereçar 4GB - o início do endereçamento do sistema
     si->pmm.sys_pt = top_page * sizeof(Page);
 
     // Page tables to map the whole physical memory
     // = NP/NPTE_PT * sizeof(Page)
     //   NP = size of physical memory in pages
     //   NPTE_PT = number of page table entries per page table, e.g., 256 in this config (12, 8, 12)
-    top_page -= ???;
+    top_page -= MMU::pages(0x0 - 1) / 256; // Desce o número de páginas que precisa pra endereçar todos os 4GB
     si->pmm.phy_mem_pts = top_page * sizeof(Page);
 
     // Page tables to map the IO address space
     // = NP/NPTE_PT * sizeof(Page)
     // NP = size of I/O address space in pages
     // NPTE_PT = number of page table entries per page table
-    top_page -= ???;
+    top_page -= MMU::pages(Traits<Machine>::SYS - Traits<Machine>::IO);
     si->pmm.io_pts = top_page * sizeof(Page);
 
     // Page tables to map the first APPLICATION code segment
-    top_page -= ???;
+    top_page -= MMU::pages(Traits<Machine>::APP_DATA - Traits<Machine>::APP_CODE);
     si->pmm.app_code_pts = top_page * sizeof(Page);
 
     // Page tables to map the first APPLICATION data segment (which contains heap, stack and extra)
-    top_page -= ???;
+    top_page -= MMU::pages(Traits<Machine>::APP_HIGH - Traits<Machine>::APP_DATA);
     si->pmm.app_data_pts = top_page * sizeof(Page);
 
     // System Info (1 x sizeof(Page))
