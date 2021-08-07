@@ -144,8 +144,7 @@ public:
             }
         }
 
-        // utilizado para imprimir entradas de uma tabela(acho)
-        // TODO: checar
+        // utilizado para imprimir uma tabela com cout
         friend OStream & operator<<(OStream & os, Page_Table & pt) {
             os << "{\n";
             int brk = 0;
@@ -175,7 +174,7 @@ public:
           _to(pages(bytes)), // numero de pag necessarias para enderecar n bytes
           _pts(page_tables(_to - _from)), // numero de pag tables necessarias para enderecar n paginas
           _flags(Page_Flags(flags)), // flags do segmento
-          _pt(calloc(_pts, WHITE)) // cria page table no qual esse segmento é mapeado
+          _pt(calloc(_pts, WHITE)) // cria page table inicial no qual esse segmento é mapeado
         {
             // n achei exatamente o que seriam as flags do ARMv7 que indicam mapeamento continuo.
             // sendo assim só deixei a opção de usar map para mapeamento de pags
@@ -257,7 +256,8 @@ public:
     class Directory
     {
     public:
-        Directory() : _pd(calloc(1, WHITE)), _free(true) {
+        // talvez tenham que ser quatro frames, pois a page dir tem 16kb, e um frame no esquema atual tem 4kb
+        Directory() : _pd(calloc(4, WHITE)), _free(true) {
             for(unsigned int i = directory(PHY_MEM); i < PD_ENTRIES; i++)
                 (*_pd)[i] = (*_master)[i];
         }
@@ -271,14 +271,17 @@ public:
         // ativa o address space representado por essa tabela de diretorio
         void activate() const { CPU::pdp(pd()); }
 
-        // 'atacha' segmento de memoria a esse address space
+        // 'atacha' segmento de memoria a esse address space no primeiro indice da tabela em que for possível fazer isso
         Log_Addr attach(const Chunk & chunk, unsigned int from = directory(APP_LOW)) {
+            // percorre as entradas da tabela de dir
             for(unsigned int i = from; i < PD_ENTRIES; i++)
+                // tenta adicionar uma referencia a tab de pags do chunk a entrada i
                 if(attach(i, chunk.pt(), chunk.pts(), chunk.flags()))
                     return i << DIRECTORY_SHIFT;
             return Log_Addr(false);
         }
 
+        // realiza o mesmo processo do método acima, mas APENAS no índice especificado no endereço lógico addr
         Log_Addr attach(const Chunk & chunk, Log_Addr addr) {
             unsigned int from = directory(addr);
             if(attach(from, chunk.pt(), chunk.pts(), chunk.flags()))
@@ -286,6 +289,7 @@ public:
             return Log_Addr(false);
         }
 
+        // remove a referencia a uma tab de pags que está presente em alguma das entradas dessa tab de dir
         void detach(const Chunk & chunk) {
             for(unsigned int i = 0; i < PD_ENTRIES; i++) {
                 if(indexes(pte2phy((*_pd)[i])) == indexes(chunk.pt())) {
@@ -293,35 +297,51 @@ public:
                     return;
                 }
             }
+            // detach falou
             db<MMU>(WRN) << "MMU::Directory::detach(pt=" << chunk.pt() << ") failed!" << endl;
         }
 
+        // faz o mesmo do método acima, com a diferenca de que não é feita uma busca. O indíce nos quais as referencias
+        // para as tab de pags q enderecam o segmento é obtido pelo endereço log passado.
         void detach(const Chunk & chunk, Log_Addr addr) {
             unsigned int from = directory(addr);
             if(indexes(pte2phy((*_pd)[from])) != indexes(chunk.pt())) {
+                // detach falhou
                 db<MMU>(WRN) << "MMU::Directory::detach(pt=" << chunk.pt() << ",addr=" << addr << ") failed!" << endl;
                 return;
             }
             detach(from, chunk.pt(), chunk.pts());
         }
 
+        // obtem algum endereco físico mapeado nessa pag com base no end log passado
         Phy_Addr physical(Log_Addr addr) {
+            // pega porção do end log passado que corresponde a um indice nessa page dir, e guarda um ponteiro para essa entrada em pde
             PD_Entry pde = (*_pd)[directory(addr)];
+            // pega o end base de alguma tabela de pag que está codificado nessa pde, e guarda um ponteiro para essa entrada em pte
             Page_Table * pt = static_cast<Page_Table *>(pde2phy(pde));
+            // obtem o end base de alguma pag que está guardado em pte
             PT_Entry pte = pt->log()[page(addr)];
+            // retorna o end fisico representado pelo end virtual passado para esse metodo
             return pte | offset(addr);
         }
 
     private:
+    // método que recebe o indice de uma entrada da tab de dir, um ponteiro para uma tab de pags inicial, numero de tabelas de pags
+    // usada para enderecar segmento e as flags a se aplicar
         bool attach(unsigned int from, const Page_Table * pt, unsigned int n, Page_Flags flags) {
+            // percorre um numero de entradas necessarias para enderecar todas as tab de pags q enderecam o segmento
             for(unsigned int i = from; i < from + n; i++)
+                // verifica se a entrada não possui em end válido. Se possuir, n conclui o processo
                 if(_pd->log()[i])
                     return false;
+            // percorre as entradas novamente, dessa vez convertendo os endereços base de cada tabela pag para entradas da tab de dir
             for(unsigned int i = from; i < from + n; i++, pt++)
                 _pd->log()[i] = phy2pde(Phy_Addr(pt));
+            // consegui adicionar todo o segmento alocado ao address space atual
             return true;
         }
 
+        // método que zera n entradas da page dir, começando em 'from'
         void detach(unsigned int from, const Page_Table * pt, unsigned int n) {
             for(unsigned int i = from; i < from + n; i++)
                 _pd->log()[i] = 0;
@@ -331,12 +351,60 @@ public:
         Page_Directory * _pd;  // this is a physical address, but operator*() returns a logical address
         bool _free;
     };
+    
+    // DMA_Buffer - DIrect Memory Access Buffer
+    class DMA_Buffer: public Chunk
+    {
+    public:
+        DMA_Buffer(unsigned int s) : Chunk(s, Page_Flags::PRIVILED_ACCESS_ONLY) {
+            Directory dir(current());
+            _log_addr = dir.attach(*this);
+            db<MMU>(TRC) << "MMU::DMA_Buffer() => " << *this << endl;
+        }
 
-    // DMA_Buffer
-    class DMA_Buffer;
+        DMA_Buffer(unsigned int s, Log_Addr d): Chunk(s, Page_Flags::PRIVILED_ACCESS_ONLY) {
+            Directory dir(current());
+            _log_addr = dir.attach(*this);
+            memcpy(_log_addr, d, s);
+            db<MMU>(TRC) << "MMU::DMA_Buffer(phy=" << *this << " <= " << d << endl;
+        }
+
+        Log_Addr log_address() const { return _log_addr; }
+
+        friend OStream & operator<<(OStream & os, const DMA_Buffer & b) {
+            os << "{phy=" << b.phy_address() << ",log=" << b.log_address() << ",size=" << b.size() << ",flags=" << b.flags() << "}";
+            return os;
+        }
+
+    private:
+        Log_Addr _log_addr;
+    };
 
     // Class Translation performs manual logical to physical address translations for debugging purposes only
-    class Translation;
+    // Class Translation performs manual logical to physical address translations for debugging purposes only
+    class Translation
+    {
+    public:
+        Translation(Log_Addr addr, bool pt = false, Page_Directory * pd = 0): _addr(addr), _show_pt(pt), _pd(pd) {}
+
+        friend OStream & operator<<(OStream & os, const Translation & t) {
+            Page_Directory * pd = t._pd ? t._pd : current();
+            PD_Entry pde = pd->log()[directory(t._addr)];
+            Page_Table * pt = static_cast<Page_Table *>(pde2phy(pde));
+            PT_Entry pte = pt->log()[page(t._addr)];
+
+            os << "{addr=" << static_cast<void *>(t._addr) << ",pd=" << pd << ",pd[" << directory(t._addr) << "]=" << pde << ",pt=" << pt;
+            if(t._show_pt)
+                os << "=>" << pt->log();
+            os << ",pt[" << page(t._addr) << "]=" << pte << ",f=" << pte2phy(pte) << ",*addr=" << hex << *static_cast<unsigned int *>(t._addr) << "}";
+            return os;
+        }
+
+    private:
+        Log_Addr _addr; // end log
+        bool _show_pt; // mostrar pt?
+        Page_Directory * _pd; // page dir
+    };
 
 public:
     ARMv7_MMU() {}
