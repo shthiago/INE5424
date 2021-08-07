@@ -58,6 +58,15 @@ public:
             NON_SHAREABLE_DEVICE = (1 << 7) | XN, // Outer and Inner non-cacheable
             // Mascara para ajudar a limpar o campo de flags de uma PTE
             MASK_PTE = (1 << 12) - 1,
+            V    = 1 << 0, // Valid
+            R    = 1 << 1, // Readable
+            W    = 1 << 2, // Writable
+            X    = 1 << 3, // Executable
+            U    = 1 << 4, // User accessible
+            MIO  = 1 << 9, // I/O (reserved for use by supervisor RSW)
+            SYS  = (V | R | W | X),
+            APP  = (V | R | W | X | U),
+            IO   = (SYS | MIO),
             // Mascara para ajudar a limpar o campo de flags de uma PDE
             MASK_PDE = (1 << 10) - 1
         };
@@ -336,7 +345,29 @@ public:
     class DMA_Buffer;
 
     // Class Translation performs manual logical to physical address translations for debugging purposes only
-    class Translation;
+    class Translation
+    {
+    public:
+        Translation(Log_Addr addr, bool pt = false, Page_Directory * pd = 0): _addr(addr), _show_pt(pt), _pd(pd) {}
+
+        friend OStream & operator<<(OStream & os, const Translation & t) {
+            Page_Directory * pd = t._pd ? t._pd : current();
+            PD_Entry pde = pd->log()[directory(t._addr)];
+            Page_Table * pt = static_cast<Page_Table *>(pde2phy(pde));
+            PT_Entry pte = pt->log()[page(t._addr)];
+
+            os << "{addr=" << static_cast<void *>(t._addr) << ",pd=" << pd << ",pd[" << directory(t._addr) << "]=" << pde << ",pt=" << pt;
+            if(t._show_pt)
+                os << "=>" << pt->log();
+            os << ",pt[" << page(t._addr) << "]=" << pte << ",f=" << pte2phy(pte) << ",*addr=" << hex << *static_cast<unsigned int *>(t._addr) << "}";
+            return os;
+        }
+
+    private:
+        Log_Addr _addr;
+        bool _show_pt;
+        Page_Directory * _pd;
+    };
 
 public:
     ARMv7_MMU() {}

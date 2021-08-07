@@ -9,7 +9,7 @@
 _mcu_start:
         // Temporary Stack Pointer for INIT
         // Main's stack will be allocated by Thread::init()  
-        ldr     r0, =__boot_stack__
+        ldr     r0, =0x3eeefffc
         mov     sp, r0
 
         // Clear the BSS

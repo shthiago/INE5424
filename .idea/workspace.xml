@@ -43,9 +43,27 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="60033023-b17b-40d9-8f32-703914f7c699" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/test_e6/test_e6_traits.h" beforeDir="false" afterPath="$PROJECT_DIR$/app/test_e6/test_e6_traits.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/etc/eposmkbi.conf" beforeDir="false" afterPath="$PROJECT_DIR$/etc/eposmkbi.conf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/architecture/armv7/armv7_mmu.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/architecture/armv7/armv7_mmu.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/machine/cortex/raspberry_pi3/raspberry_pi3_traits.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/machine/cortex/raspberry_pi3/raspberry_pi3_traits.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/system/config.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/system/config.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/api/address_space.o" beforeDir="false" afterPath="$PROJECT_DIR$/src/api/address_space.o" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/api/alarm_init.o" beforeDir="false" afterPath="$PROJECT_DIR$/src/api/alarm_init.o" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/api/segment.o" beforeDir="false" afterPath="$PROJECT_DIR$/src/api/segment.o" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/api/thread.o" beforeDir="false" afterPath="$PROJECT_DIR$/src/api/thread.o" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/api/thread_init.o" beforeDir="false" afterPath="$PROJECT_DIR$/src/api/thread_init.o" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/architecture/armv7/armv7_cpu_init.o" beforeDir="false" afterPath="$PROJECT_DIR$/src/architecture/armv7/armv7_cpu_init.o" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/architecture/armv7/armv7_crt0.S" beforeDir="false" afterPath="$PROJECT_DIR$/src/architecture/armv7/armv7_crt0.S" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/architecture/armv7/armv7_crt0.o" beforeDir="false" afterPath="$PROJECT_DIR$/src/architecture/armv7/armv7_crt0.o" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/machine/cortex/raspberry_pi3/raspberry_pi3_ic.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/machine/cortex/raspberry_pi3/raspberry_pi3_ic.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/machine/cortex/raspberry_pi3/raspberry_pi3_ic.o" beforeDir="false" afterPath="$PROJECT_DIR$/src/machine/cortex/raspberry_pi3/raspberry_pi3_ic.o" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/setup/setup_raspberry_pi3.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/setup/setup_raspberry_pi3.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/setup/setup_raspberry_pi3.o" beforeDir="false" afterPath="$PROJECT_DIR$/src/setup/setup_raspberry_pi3.o" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/utility/delete.o" beforeDir="false" afterPath="$PROJECT_DIR$/src/utility/delete.o" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tools/eposcfg/eposcfg" beforeDir="false" afterPath="$PROJECT_DIR$/tools/eposcfg/eposcfg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tools/eposcfg/eposcfg.o" beforeDir="false" afterPath="$PROJECT_DIR$/tools/eposcfg/eposcfg.o" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -68,33 +86,6 @@
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="MakefileLocalSettings">
-    <option name="availableProjects">
-      <map>
-        <entry>
-          <key>
-            <ExternalProjectPojo>
-              <option name="name" value="INE5424" />
-              <option name="path" value="$PROJECT_DIR$" />
-            </ExternalProjectPojo>
-          </key>
-          <value>
-            <list>
-              <ExternalProjectPojo>
-                <option name="name" value="INE5424" />
-                <option name="path" value="$PROJECT_DIR$" />
-              </ExternalProjectPojo>
-            </list>
-          </value>
-        </entry>
-      </map>
-    </option>
-    <option name="projectSyncType">
-      <map>
-        <entry key="$PROJECT_DIR$" value="RE_IMPORT" />
-      </map>
-    </option>
-  </component>
   <component name="ProjectId" id="1wJtuIE9JLEVUgcA9AbXLjXfGMV" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
@@ -110,11 +101,6 @@
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
   </component>
   <component name="RunManager" selected="Makefile Application.posbuild_">
-    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="FORCE" type="CLionNativeAppRunConfigurationType" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="INE5424" TARGET_NAME="FORCE" CONFIG_NAME="FORCE" version="1">
       <method v="2">
         <option name="CLION.COMPOUND.BUILD" enabled="true" />
@@ -260,11 +246,6 @@
         <option name="CLION.COMPOUND.BUILD" enabled="true" />
       </method>
     </configuration>
-    <configuration default="true" type="GradleAppRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="com.jetbrains.cidr.cpp.gradle.execution.GradleNativeBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
     <list>
       <item itemvalue="Makefile Application.posbuild_" />
       <item itemvalue="Makefile Application.prebuild_" />
@@ -306,6 +287,7 @@
       <option name="presentableId" value="Default" />
       <updated>1628188739651</updated>
       <workItem from="1628188748320" duration="10094000" />
+      <workItem from="1628285719626" duration="6437000" />
     </task>
     <servers />
   </component>
@@ -322,5 +304,6 @@
         </entry>
       </map>
     </option>
+    <option name="oldMeFiltersMigrated" value="true" />
   </component>
 </project>

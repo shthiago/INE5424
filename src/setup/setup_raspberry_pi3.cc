@@ -162,7 +162,7 @@ Setup::Setup()
     if(Traits<System>::multitask)
         call_next();
     else
-        _start();
+        call_next();
     // SETUP is now part of the free memory and this point should never be
     // reached, but, just in case ... :-)
     panic();
