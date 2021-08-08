@@ -162,7 +162,7 @@ Setup::Setup()
     if(Traits<System>::multitask)
         call_next();
     else
-        call_next();
+        _start();
     // SETUP is now part of the free memory and this point should never be
     // reached, but, just in case ... :-)
     panic();
@@ -204,6 +204,7 @@ void Setup::build_lm()
     if(si->lm.has_stp) {
         ELF * stp_elf = reinterpret_cast<ELF *>(&bi[si->bm.setup_offset]);
         if(!stp_elf->valid()) {
+            db<Setup>(ERR) << "Value of setup_offset: " << si->bm.setup_offset << endl;
             db<Setup>(ERR) << "SETUP ELF image is corrupted!" << endl;
             panic();
         }

@@ -217,11 +217,14 @@ int main(int argc, char **argv)
         si.bm.setup_offset = image_size - boot_size;
         fprintf(out, "    Adding setup \"%s\":", file);
         image_size += put_file(fd_img, file);
-    } else
+    } else {
+        printf("Setup found");
         si.bm.setup_offset = -1;
+    }
 
     // Add INIT and OS (for mode != library only)
     if(!strcmp(CONFIG.mode, "library")) {
+        fprintf(out, "    Library mode enabled");
         si.bm.init_offset = -1;
         si.bm.system_offset = -1;
     } else {

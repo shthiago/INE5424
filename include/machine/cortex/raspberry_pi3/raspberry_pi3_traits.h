@@ -25,7 +25,7 @@ template<> struct Traits<Machine>: public Traits<Machine_Common>
     static const unsigned int MEM_BASE          = 0x00000000;
     static const unsigned int MEM_TOP           = 0x3eeeffff;   // 1 GB
     static const unsigned int MIO_BASE          = 0x40000000;
-    static const unsigned int MIO_TOP           = 0x400000ff;
+    static const unsigned int MIO_TOP           = 0x40000fff;  // 4KB
     static const unsigned int VECTOR_TABLE      = SIMULATED ? 0x00010000 : 0x00008000;   // Defined by uboot@QEMU
     static const unsigned int PAGE_TABLES       = 0x3eef0000;   // 1006 MB
 
@@ -34,19 +34,18 @@ template<> struct Traits<Machine>: public Traits<Machine_Common>
     static const unsigned int BOOT_LENGTH_MAX   = NOT_USED;
     static const unsigned int BOOT_STACK        = 0x3eeefffc;   // MEM_TOP - sizeof(int) - 1M for boot stacks
 
-    // Logical Memory Map
     static const unsigned int BOOT              = NOT_USED;  // Not used
-    static const unsigned int IMAGE             = VECTOR_TABLE;   // TO DEFINE
+    static const unsigned int IMAGE             = 0x3ceeffff; // MEM_TOP - 32MB
     static const unsigned int SETUP             = VECTOR_TABLE;
-    static const unsigned int INIT              = VECTOR_TABLE; // TO DEFINE
+    static const unsigned int INIT              = 0x3deeffff; // MEM_TOP - 16MB
 
-    static const unsigned int APP_LOW           = MEM_BASE;
-    static const unsigned int APP_CODE          = VECTOR_TABLE;
-    static const unsigned int APP_DATA          = VECTOR_TABLE;
-    static const unsigned int APP_HIGH          = MEM_TOP;
+    static const unsigned int APP_LOW           = 0x80000000;  // 1GB for app code and data
+    static const unsigned int APP_CODE          = APP_LOW;
+    static const unsigned int APP_DATA          = 0x80400000;
+    static const unsigned int APP_HIGH          = 0xc0000000;
 
-    static const unsigned int PHY_MEM           = 0x40000000; // 2 GB
-    static const unsigned int IO                = NOT_USED;     // this machine only supports the library architecture of EPOS
+    static const unsigned int PHY_MEM           = 0x40001000; // 2 GB
+    static const unsigned int IO                = NOT_USED;
 
     static const unsigned int SYS               = 0xff700000;   // 4 GB - 9 MB
     static const unsigned int SYS_CODE          = 0xff700000;
