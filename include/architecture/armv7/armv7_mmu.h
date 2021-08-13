@@ -420,8 +420,15 @@ public:
     static PD_Entry phy2pde(Phy_Addr frame) { return (frame) | Page_Flags::PD_FLAGS; }
     static Phy_Addr pde2phy(PD_Entry entry) { return (entry & ~Page_Flags::PD_MASK); }
 
-    static void flush_tlb() {} //TODO
-    static void flush_tlb(Log_Addr addr) {} //TODO
+    static void flush_tlb() {
+        // Invalidate entire TLB
+        ASM ("TLBI ALLE1");
+    }
+
+    static void flush_tlb(Log_Addr addr) {
+        // Invalid target address on tlb
+        ASM ("TLBI VAE1, %0" : : "r"(addr));
+    }
 
     static Log_Addr phy2log(Phy_Addr phy) { return Log_Addr((MEM_BASE == PHY_MEM) ? phy : (MEM_BASE > PHY_MEM) ? phy - (MEM_BASE - PHY_MEM) : phy + (PHY_MEM - MEM_BASE)); }
     static Phy_Addr log2phy(Log_Addr log) { return Phy_Addr((MEM_BASE == PHY_MEM) ? log : (MEM_BASE > PHY_MEM) ? log + (MEM_BASE - PHY_MEM) : log - (PHY_MEM - MEM_BASE)); }
