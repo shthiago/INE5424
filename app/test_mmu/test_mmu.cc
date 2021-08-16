@@ -27,21 +27,21 @@ void test_mmu(Address_Space *self) {
     CPU::Log_Addr * extra3 = self->attach(es3);
     cout << "  logical address of segment 3 is " << extra3 << "." << endl;
 
-    cout << "Set segments bits to 0... ";
+    cout << "Set segments bits to 0... " << endl;
     memset(extra1, 0, ES1_SIZE);
-    cout << "segment 1 reseted... ";
+    cout << "segment 1 reseted... " << endl;
     memset(extra2, 0, ES2_SIZE);
-    cout << "segment 2 reseted... ";
+    cout << "segment 2 reseted... " << endl;
     memset(extra3, 0, ES1_SIZE);
-    cout << "segment 3 reseted... ";
+    cout << "segment 3 reseted... " << endl;
     cout << " all segmentes reseted;" << endl;
     
-    cout << "Detaching the first segment...";
+    cout << "Detaching the first segment..." << endl;
     self->detach(es1);
     cout << "segment 1 detached." << endl;
     
-    cout << "Deleting the first segment...";
-    delete es2;
+    cout << "Deleting the first segment..." << endl;
+    delete es1;
     cout << "segment 1 deleted." << endl;
     
     cout << "Creating a fourth data segment ..." << endl;
@@ -56,16 +56,16 @@ void test_mmu(Address_Space *self) {
     memset(extra4, 0, ES2_SIZE);
     cout << "segment 4 reseted." << endl;
     
-    cout << "Detaching other segments...";
+    cout << "Detaching other segments..." << endl;
     self->detach(es2);
-    cout << "segment 2 detached...";
+    cout << "segment 2 detached..." << endl;
     self->detach(es3);
-    cout << "segment 3 detached...";
+    cout << "segment 3 detached..." << endl;
     self->detach(es4);
-    cout << "segment 4 detached...";
+    cout << "segment 4 detached..." << endl;
     cout << "  all segments detached" << endl;
     
-    cout << "Deleting segments 2, 3 and 4... ";
+    cout << "Deleting segments 2, 3 and 4... " << endl;
     delete es2;
     delete es3;
     delete es4;

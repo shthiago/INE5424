@@ -4,8 +4,10 @@
 using namespace EPOS;
 OStream cout;
 
+Thread * main_thread;
+
 int func_thread_a() {
-    cout << "This is thread A! Suspendin..." << endl;
+    cout << "This is thread A! Suspending..." << endl;
     Thread::self()->suspend();
 
     cout << "This is thread A again! Returning..." << endl;
@@ -13,7 +15,7 @@ int func_thread_a() {
 }
 
 int func_thread_b() {
-    cout << "This is thread B! Suspendin..." << endl;
+    cout << "This is thread B! Suspending..." << endl;
     Thread::self()->suspend();
 
     cout << "This is thread B again! Returning..." << endl;
@@ -21,7 +23,7 @@ int func_thread_b() {
 }
 
 int func_thread_c() {
-    cout << "This is thread C! Suspendin..." << endl;
+    cout << "This is thread C! Suspending..." << endl;
     Thread::self()->suspend();
 
     cout << "This is thread C again! Returning..." << endl;
@@ -32,6 +34,7 @@ int func_thread_c() {
 int main() {
     cout << "Testing Task creation" << endl;
 
+    main_thread = Thread::self();
 
     Task * current_task = Task::self();
 
@@ -57,15 +60,15 @@ int main() {
     Thread * thread_b = new Thread(&func_thread_b);
     Thread * thread_c = new Thread(&func_thread_c);
 
-    cout << "Suspending main task..." << endl;
-    Thread * current_thread = Thread::self();
-    current_thread->suspend();
+    cout << "Waiting on main task..." << endl;
+
+    Alarm::delay(1000000);
 
     // TODO Test fork
 
     cout << "This is main thread. Other threads ran and suspended themselves. Will wait them to finish after suspend" << endl;
 
-    Alarm::delay(10000000);
+    Alarm::delay(1000000);
 
     thread_a->resume();
     Thread::yield();
@@ -75,7 +78,7 @@ int main() {
     
     int thread_a_return = thread_a->join();
     int thread_b_return = thread_b->join();
-    int thread_b_return = thread_c->join();
+    int thread_c_return = thread_c->join();
 
     cout << "Thread a return " << thread_a_return << endl;
     cout << "Thread b return " << thread_b_return << endl;

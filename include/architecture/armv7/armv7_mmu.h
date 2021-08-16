@@ -225,6 +225,8 @@ public:
     // Directory (for Address_Space)
     class Directory
     {
+        friend class Task;
+
     public:
         Directory() : _pd(calloc(1, WHITE)), _free(true) {
             for(unsigned int i = directory(PHY_MEM); i < PD_ENTRIES; i++)
@@ -422,12 +424,12 @@ public:
 
     static void flush_tlb() {
         // Invalidate entire TLB
-        ASM ("TLBI ALLE1");
+        // ASM ("TLBI alle1");
     }
 
     static void flush_tlb(Log_Addr addr) {
         // Invalid target address on tlb
-        ASM ("TLBI VAE1, %0" : : "r"(addr));
+        // ASM ("TLBI vae1, %0" : : "r"(addr));
     }
 
     static Log_Addr phy2log(Phy_Addr phy) { return Log_Addr((RAM_BASE == PHY_MEM) ? phy : (RAM_BASE > PHY_MEM) ? phy - (RAM_BASE - PHY_MEM) : phy + (PHY_MEM - RAM_BASE)); }

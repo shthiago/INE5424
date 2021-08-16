@@ -13,6 +13,8 @@ class Address_Space: private MMU::Directory
     friend class Thread;        // for Address_Space(pd)
     friend class Scratchpad;    // for Address_Space(pd)
 
+    friend class Task;
+
 private:
     using MMU::Directory::activate;
 
