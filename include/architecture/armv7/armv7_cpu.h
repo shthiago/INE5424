@@ -183,7 +183,7 @@ public:
     static void flags(Flags r) {     ASM("msr xpsr_nzcvq, %0" : : "r"(r) : "cc"); }
 
     static Reg32 pdp() { return 0;}
-    static void pdp(Reg32 pdp) {}
+    static void pdp(Reg32 pdp) { }
 
     static unsigned int id() { return 0; }
 

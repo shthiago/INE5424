@@ -342,6 +342,12 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
         }
         db<Thread>(INF) << "Thread::dispatch:next={" << next << ",ctx=" << *next->_context << "}" << endl;
 
+        // Activate next thread task's address space, if it is not the same as current
+        if (multitask && (next->_task != prev->_task)) {
+            db<Thread>(INF) << "Multitasking detected! Changing address space." << endl;
+            next->_task->activate();
+        }
+
         // The non-volatile pointer to volatile pointer to a non-volatile context is correct
         // and necessary because of context switches, but here, we are locked() and
         // passing the volatile to switch_constext forces it to push prev onto the stack,

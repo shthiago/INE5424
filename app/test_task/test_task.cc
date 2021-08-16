@@ -47,7 +47,7 @@ int main() {
 
     Segment * current_task_data_segment = current_task->data_segment();
     CPU::Log_Addr current_task_data_init = current_task->data();
-    cout << "The code segment of the current task is at " << static_cast<void *>(current_task_data_init)
+    cout << "The data segment of the current task is at " << static_cast<void *>(current_task_data_init)
          << " and it ends at " << static_cast<void *>(current_task_data_init + current_task_data_segment->size())
          << endl;
 
@@ -63,8 +63,6 @@ int main() {
     cout << "Waiting on main task..." << endl;
 
     Alarm::delay(1000000);
-
-    // TODO Test fork
 
     cout << "This is main thread. Other threads ran and suspended themselves. Will wait them to finish after suspend" << endl;
 
