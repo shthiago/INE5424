@@ -344,9 +344,12 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
 
         // Activate next thread task's address space, if it is not the same as current
         if (multitask && (next->_task != prev->_task)) {
-            db<Thread>(INF) << "Multitasking detected! Changing address space." << endl;
+            db<Thread>(WRN) << "Multitasking detected! Changing address space because" << endl
+                            << "next Thread belongs to another Task!." << endl;
             next->_task->activate();
         }
+
+        MMU::flush_tlb();
 
         // The non-volatile pointer to volatile pointer to a non-volatile context is correct
         // and necessary because of context switches, but here, we are locked() and

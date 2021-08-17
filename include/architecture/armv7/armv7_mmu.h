@@ -425,6 +425,8 @@ public:
     static void flush_tlb() {
         // Invalidate entire TLB
         // ASM ("TLBI alle1");
+        ASM("mcr     p15, 0, r0, c7, c5, 4 \n" //  @ ISB
+            "mcrne   p15, 0, r0, c8, c7, 0");  // @ flush I,D TLBs
     }
 
     static void flush_tlb(Log_Addr addr) {
