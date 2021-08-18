@@ -146,7 +146,61 @@ public:
     };
 
     // Page Directory
-    typedef Page_Table Page_Directory;
+    class Page_Directory {
+    public:
+        Page_Directory() {}
+
+        PD_Entry & operator[](unsigned int i) { return _entry[i]; }
+        Page_Directory & log() { return *static_cast<Page_Directory *>(phy2log(this)); }
+
+        void map(int from, int to, Page_Flags flags, Color color) {
+            Phy_Addr * addr = alloc(to - from, color);
+            if(addr)
+                remap(addr, from, to, flags);
+            else
+                for( ; from < to; from++) {
+                    Log_Addr * pte = phy2log(&_entry[from]);
+                    *pte = phy2pte(alloc(1, color), flags);
+                }
+        }
+
+        void map_contiguous(int from, int to, Page_Flags flags, Color color) {
+            remap(alloc(to - from, color), from, to, flags);
+        }
+
+        void remap(Phy_Addr addr, int from, int to, Page_Flags flags) {
+            addr = align_page(addr);
+            for( ; from < to; from++) {
+                Log_Addr * pte = phy2log(&_entry[from]);
+                *pte = phy2pte(addr, flags);
+                addr += sizeof(Page);
+            }
+        }
+
+        void unmap(int from, int to) {
+            for( ; from < to; from++) {
+                free(_entry[from]);
+                Log_Addr * pte = phy2log(&_entry[from]);
+                *pte = 0;
+            }
+        }
+
+        friend OStream & operator<<(OStream & os, Page_Directory & pt) {
+            os << "{\n";
+            int brk = 0;
+            for(unsigned int i = 0; i < PD_ENTRIES; i++)
+                if(pt[i]) {
+                    os << "[" << i << "]=" << pt[i] << "  ";
+                    if(!(++brk % 4))
+                        os << "\n";
+                }
+            os << "\n}";
+            return os;
+        }
+
+    private:
+        PD_Entry _entry[PD_ENTRIES]; // the Phy_Addr in each entry passed through phy2pte()
+    };
 
     // Chunk (for Segment)
     class Chunk
@@ -229,7 +283,15 @@ public:
         friend class Task;
 
     public:
-        Directory() : _pd(reinterpret_cast<Page_Directory *>((calloc(4, WHITE) & ~(0x3fff)))), _free(true) { // each pd has up to 4096 entries and must be aligned with 16KB
+        Directory() : _base(calloc(7, WHITE)), _free(true) {
+            // each pd has up to 4096 entries and must be aligned with 16K
+            if (_base & 0x3FFF) {
+                _base = (_base & ~(0x3FFF)) + (0x1 << 14);
+            }
+
+            _pd = Phy_Addr(_base);
+            Page_Directory * _master = current();
+
             for(unsigned int i = directory(PHY_MEM); i < directory(APP_LOW); i++)
                 (*_pd)[i] = (*_master)[i];
             
@@ -302,6 +364,7 @@ public:
 
     private:
         Page_Directory * _pd;  // this is a physical address, but operator*() returns a logical address
+        Phy_Addr _base;
         bool _free;
     };
 
