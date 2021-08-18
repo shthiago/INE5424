@@ -25,6 +25,7 @@ void print_task_ad_and_segments() {
 int main() {
     cout << "Testing New Task creation and switching" << endl;
     int task_id = Task::self()->id(); 
+
     if (task_id == 1) {
         cout << "Forking..." << endl;
         Task::fork(&main);
@@ -32,19 +33,19 @@ int main() {
 
     if (task_id == 1) {
         cout << "============================================================" << endl;
-        cout << "This is the forked Task running in the main function in the app" << endl;
+        cout << "This is the main Task running in the main function in the app" << endl;
         
     } else {
         cout << "============================================================" << endl;
-        cout << "This is the main Task running in the main function in the app" << endl;
+        cout << "This is the forked Task running in the main function in the app" << endl;
     }
 
     print_task_ad_and_segments();
 
     if (task_id == 1) {
-        cout << "End of forked task thread" << endl;
+        cout << "End main task thread." << endl;
         
     } else {
-        cout << "End main task thread." << endl;
+        cout << "End of forked task thread" << endl;
     }
 }

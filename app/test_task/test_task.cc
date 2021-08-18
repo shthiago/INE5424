@@ -32,7 +32,7 @@ int func_thread_c() {
 
 
 int main() {
-    cout << "Testing Task creation" << endl;
+    cout << "Testing Threads creation on the same task" << endl;
 
     main_thread = Thread::self();
 

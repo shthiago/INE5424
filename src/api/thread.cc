@@ -347,9 +347,6 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
             db<Thread>(INF) << "Multitasking detected! Changing address space because" << endl
                             << "next Thread belongs to another Task!." << endl;
             next->_task->activate();
-            MMU::flush_tlb();
-            db<Thread>(INF) << "TLB flushed!" << endl;
-
             Task::current(next->_task);
         }
 
@@ -359,7 +356,6 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
         // disrupting the context (it doesn't make a difference for Intel, which already saves
         // parameters on the stack anyway).
         CPU::switch_context(const_cast<Context **>(&prev->_context), next->_context);
-        db<Thread>(INF) << "Context switched!" << endl;
     }
 }
 

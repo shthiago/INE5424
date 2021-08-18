@@ -267,7 +267,7 @@ public:
         current_address_space->detach(data_seg_copy);
         MMU::flush_tlb();
 
-        new (SYSTEM) Task(Thread::Configuration(), code_seg_copy, data_seg_copy, entry);
+        new (SYSTEM) Task(Thread::Configuration(Thread::READY, Thread::NORMAL), code_seg_copy, data_seg_copy, entry);
     }
 
 private:

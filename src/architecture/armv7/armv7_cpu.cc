@@ -75,7 +75,6 @@ if(Traits<FPU>::enabled && !Traits<FPU>::user_save)
     // Set the stack pointer to "n" and pop the context
     ASM("       mov     sp, r1                  \n"     // get Context * volatile n into SP
         "       isb                             \n");   // serialize the pipeline so SP gets updated before the pop
-db<CPU>(INF) << "3" << endl;
     ASM("       pop     {r12}                   \n");   // pop flags into the temporary register r12
     msr12();                                            // restore flags
 
