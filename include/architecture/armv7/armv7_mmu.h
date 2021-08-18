@@ -493,6 +493,8 @@ public:
         // Invalidate entire TLB
         // ASM ("TLBI alle1");
         ASM("MCR p15, 0, r2, c8, c7, 0");
+        CPU::dsb();
+        CPU::isb();
     }
 
     static void flush_tlb(Log_Addr addr) {
