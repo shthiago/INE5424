@@ -205,7 +205,7 @@ protected:
     // This constructor is only used by Thread::init()
     template<typename ... Tn>
     Task(Address_Space * as, Segment * cs, Segment * ds, int (* entry)(Tn ...), const Log_Addr & code, const Log_Addr & data, Tn ... an)
-    : _as(as), _cs(cs), _ds(ds), _entry(entry), _code(code), _data(data) {
+    : _as(as), _cs(cs), _ds(ds), _entry(entry), _code(code), _data(data), _id(1) {
         db<Task, Init>(TRC) << "Task(as=" << _as << ",cs=" << _cs << ",ds=" << _ds << ",entry=" << _entry << ",code=" << _code << ",data=" << _data << ") => " << this << endl;
 
         _current = this;
@@ -216,17 +216,17 @@ protected:
 public:
     template<typename ... Tn>
     Task(Segment * cs, Segment * ds, int (* entry)(Tn ...), Tn ... an)
-    : _as (new (SYSTEM) Address_Space), _cs(cs), _ds(ds), _entry(entry), _code(_as->attach(_cs)), _data(_as->attach(_ds)) {
+    : _as (new (SYSTEM) Address_Space), _cs(cs), _ds(ds), _entry(entry), _code(_as->attach(_cs)), _data(_as->attach(_ds)), _id(0) {
         db<Task>(TRC) << "Task(as=" << _as << ",cs=" << _cs << ",ds=" << _ds << ",entry=" << _entry << ",code=" << _code << ",data=" << _data << ") => " << this << endl;
 
         _main = new (SYSTEM) Thread(Thread::Configuration(Thread::READY, Thread::MAIN, WHITE, this, 0), entry, an ...);
     }
     template<typename ... Tn>
     Task(const Thread::Configuration & conf, Segment * cs, Segment * ds, int (* entry)(Tn ...), Tn ... an)
-    : _as (new (SYSTEM) Address_Space), _cs(cs), _ds(ds), _entry(entry), _code(_as->attach(_cs)), _data(_as->attach(_ds)) {
+    : _as (new (SYSTEM) Address_Space), _cs(cs), _ds(ds), _entry(entry), _code(_as->attach(_cs)), _data(_as->attach(_ds)), _id(0) {
         db<Task>(TRC) << "Task(as=" << _as << ",cs=" << _cs << ",ds=" << _ds << ",entry=" << _entry << ",code=" << _code << ",data=" << _data << ") => " << this << endl;
 
-        _main = new (SYSTEM) Thread(Thread::Configuration(conf.state, conf.criterion, this, 0), entry, an ...);
+        _main = new (SYSTEM) Thread(Thread::Configuration(conf.state, conf.criterion, WHITE, this, 0), entry, an ...);
     }
     ~Task();
 
@@ -241,6 +241,34 @@ public:
     Thread * main() const { return _main; }
 
     static Task * volatile self() { return current(); }
+
+    int id() { return _id; };
+    void id(int id) { _id = id; };
+
+    static void fork(int (* entry)()) {
+        Task * current = Task::self();
+        Segment * current_code_seg = current->code_segment();
+        Segment * current_data_seg = current->data_segment();
+
+        Segment * code_seg_copy = new (SYSTEM) Segment(current_code_seg->size(), Segment::Flags::SYS);
+        Segment * data_seg_copy = new (SYSTEM) Segment(current_data_seg->size(), Segment::Flags::SYS);
+
+        // Attach the new segments to the current ad to make the copy
+        // Detach after
+        Address_Space * current_address_space = current->address_space();
+
+        CPU::Log_Addr code_seg_addr = current_address_space->attach(code_seg_copy);
+        memcpy(code_seg_addr, current->code(), current_code_seg->size());
+        current_address_space->detach(code_seg_copy);
+        MMU::flush_tlb();
+
+        CPU::Log_Addr data_seg_addr = current_address_space->attach(data_seg_copy);
+        memcpy(data_seg_addr, current->data(), current_data_seg->size());
+        current_address_space->detach(data_seg_copy);
+        MMU::flush_tlb();
+
+        new (SYSTEM) Task(Thread::Configuration(), code_seg_copy, data_seg_copy, entry);
+    }
 
 private:
     void activate() const { _as->activate(); }
@@ -262,6 +290,7 @@ private:
     Log_Addr _data;
     Thread * _main;
     Queue _threads;
+    int _id;
 
     static Task * volatile _current;
 };

@@ -344,12 +344,14 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
 
         // Activate next thread task's address space, if it is not the same as current
         if (multitask && (next->_task != prev->_task)) {
-            db<Thread>(WRN) << "Multitasking detected! Changing address space because" << endl
+            db<Thread>(INF) << "Multitasking detected! Changing address space because" << endl
                             << "next Thread belongs to another Task!." << endl;
             next->_task->activate();
-        }
+            MMU::flush_tlb();
+            db<Thread>(INF) << "TLB flushed!" << endl;
 
-        MMU::flush_tlb();
+            Task::current(next->_task);
+        }
 
         // The non-volatile pointer to volatile pointer to a non-volatile context is correct
         // and necessary because of context switches, but here, we are locked() and
@@ -357,6 +359,7 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
         // disrupting the context (it doesn't make a difference for Intel, which already saves
         // parameters on the stack anyway).
         CPU::switch_context(const_cast<Context **>(&prev->_context), next->_context);
+        db<Thread>(INF) << "Context switched!" << endl;
     }
 }
 

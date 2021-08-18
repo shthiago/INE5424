@@ -20,6 +20,7 @@ private:
     static const unsigned int RAM_BASE = Memory_Map::RAM_BASE;
     static const unsigned int APP_LOW = Memory_Map::APP_LOW;
     static const unsigned int PHY_MEM = Memory_Map::PHY_MEM;
+    static const unsigned int SYS = Memory_Map::SYS;
 
 public:
     // Page Flags
@@ -229,7 +230,10 @@ public:
 
     public:
         Directory() : _pd(reinterpret_cast<Page_Directory *>((calloc(4, WHITE) & ~(0x3fff)))), _free(true) { // each pd has up to 4096 entries and must be aligned with 16KB
-            for(unsigned int i = directory(PHY_MEM); i < PD_ENTRIES; i++)
+            for(unsigned int i = directory(PHY_MEM); i < directory(APP_LOW); i++)
+                (*_pd)[i] = (*_master)[i];
+            
+            for(unsigned int i = directory(SYS); i < PD_ENTRIES; i++)
                 (*_pd)[i] = (*_master)[i];
         }
 
@@ -425,8 +429,7 @@ public:
     static void flush_tlb() {
         // Invalidate entire TLB
         // ASM ("TLBI alle1");
-        ASM("mcr     p15, 0, r0, c7, c5, 4 \n" //  @ ISB
-            "mcrne   p15, 0, r0, c8, c7, 0");  // @ flush I,D TLBs
+        ASM("MCR p15, 0, r2, c8, c7, 0");
     }
 
     static void flush_tlb(Log_Addr addr) {
