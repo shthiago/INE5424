@@ -11,6 +11,7 @@ __BEGIN_SYS
 class ARMv7_MMU: public MMU_Common<12, 8, 12>
 {
     friend class CPU;
+    friend class Setup;
 
 private:
     typedef Grouping_List<Frame> List;
@@ -89,12 +90,14 @@ public:
     };
 
     // Page_Table
-    class Page_Table  {
+    template<unsigned int ENTRIES>
+    class _Page_Table
+    {
     public:
-        Page_Table() {}
+        _Page_Table() {}
 
         PT_Entry & operator[](unsigned int i) { return _entry[i]; }
-        Page_Table & log() { return *static_cast<Page_Table *>(phy2log(this)); }
+        _Page_Table & log() { return *static_cast<_Page_Table *>(phy2log(this)); }
 
         void map(int from, int to, Page_Flags flags, Color color) {
             Phy_Addr * addr = alloc(to - from, color);
@@ -128,10 +131,10 @@ public:
             }
         }
 
-        friend OStream & operator<<(OStream & os, Page_Table & pt) {
+        friend OStream & operator<<(OStream & os, _Page_Table & pt) {
             os << "{\n";
             int brk = 0;
-            for(unsigned int i = 0; i < PT_ENTRIES; i++)
+            for(unsigned int i = 0; i < ENTRIES; i++)
                 if(pt[i]) {
                     os << "[" << i << "]=" << pt[i] << "  ";
                     if(!(++brk % 4))
@@ -142,8 +145,10 @@ public:
         }
 
     private:
-        PT_Entry _entry[PT_ENTRIES]; // the Phy_Addr in each entry passed through phy2pte()
+        PT_Entry _entry[ENTRIES]; // the Phy_Addr in each entry passed through phy2pte()
     };
+
+    typedef _Page_Table<PT_ENTRIES> Page_Table;
 
     // Page Directory
     class Page_Directory {
@@ -301,14 +306,14 @@ public:
 
         Directory(Page_Directory * pd) : _pd(pd), _free(false) {}
 
-        ~Directory() { if(_free) free(_pd); }
+        ~Directory() { if(_free) free(_pd, sizeof(Page_Directory) / sizeof(Page)); }
 
         Phy_Addr pd() const { return _pd; }
 
-        void activate() const { CPU::pdp(pd()); }
+        void activate() const { ARMv7_MMU::pd(_pd); }
 
         Log_Addr attach(const Chunk & chunk, unsigned int from = directory(APP_LOW)) {
-            for(unsigned int i = from; i < PD_ENTRIES; i++)
+            for(unsigned int i = from; i < directory(SYS); i++)
                 if(attach(i, chunk.pt(), chunk.pts(), chunk.flags()))
                     return i << DIRECTORY_SHIFT;
             return Log_Addr(false);
@@ -358,8 +363,12 @@ public:
         }
 
         void detach(unsigned int from, const Page_Table * pt, unsigned int n) {
-            for(unsigned int i = from; i < from + n; i++)
+            for(unsigned int i = from; i < from + n; i++) {
                 _pd->log()[i] = 0;
+                flush_tlb(i << DIRECTORY_SHIFT);
+            }
+            CPU::isb();
+            CPU::dsb();
         }
 
     private:
@@ -477,7 +486,8 @@ public:
 
     static unsigned int allocable(Color color = WHITE) { return _free[color].head() ? _free[color].head()->size() : 0; }
 
-    static Page_Directory * volatile current() { return reinterpret_cast<Page_Directory * volatile>(CPU::pdp());}
+    static Page_Directory * volatile current() { return static_cast<Page_Directory * volatile>(pd());}
+
     static Phy_Addr physical(Log_Addr addr) {
         Page_Directory * pd = current();
         Page_Table * pt = pd->log()[directory(addr)];
@@ -518,6 +528,12 @@ public:
     }
 
 private:
+    static Phy_Addr pd() { return CPU::ttbr0(); }
+    static void pd(Phy_Addr pd) { CPU::ttbr0(pd); CPU::flush_tlb(); CPU::isb(); CPU::dsb(); }
+
+    static void flush_tlb() { CPU::flush_tlb(); }
+    static void flush_tlb(Log_Addr addr) { CPU::flush_tlb(directory_bits(addr)); } // only bits from 31 to 12, all ASIDs
+
     static void init();
 
 private:
