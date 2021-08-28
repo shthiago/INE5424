@@ -260,12 +260,10 @@ public:
         CPU::Log_Addr code_seg_addr = current_address_space->attach(code_seg_copy);
         memcpy(code_seg_addr, current->code(), current_code_seg->size());
         current_address_space->detach(code_seg_copy);
-        MMU::flush_tlb();
 
         CPU::Log_Addr data_seg_addr = current_address_space->attach(data_seg_copy);
         memcpy(data_seg_addr, current->data(), current_data_seg->size());
         current_address_space->detach(data_seg_copy);
-        MMU::flush_tlb();
 
         new (SYSTEM) Task(Thread::Configuration(Thread::READY, Thread::NORMAL), code_seg_copy, data_seg_copy, entry);
     }

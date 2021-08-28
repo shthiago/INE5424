@@ -499,19 +499,6 @@ public:
     static PD_Entry phy2pde(Phy_Addr frame) { return (frame) | Page_Flags::PD_FLAGS; }
     static Phy_Addr pde2phy(PD_Entry entry) { return (entry & ~Page_Flags::PD_MASK); }
 
-    static void flush_tlb() {
-        // Invalidate entire TLB
-        // ASM ("TLBI alle1");
-        ASM("MCR p15, 0, r2, c8, c7, 0");
-        CPU::dsb();
-        CPU::isb();
-    }
-
-    static void flush_tlb(Log_Addr addr) {
-        // Invalid target address on tlb
-        // ASM ("TLBI vae1, %0" : : "r"(addr));
-    }
-
     static Log_Addr phy2log(Phy_Addr phy) { return Log_Addr((RAM_BASE == PHY_MEM) ? phy : (RAM_BASE > PHY_MEM) ? phy - (RAM_BASE - PHY_MEM) : phy + (PHY_MEM - RAM_BASE)); }
     static Phy_Addr log2phy(Log_Addr log) { return Phy_Addr((RAM_BASE == PHY_MEM) ? log : (RAM_BASE > PHY_MEM) ? log + (RAM_BASE - PHY_MEM) : log - (PHY_MEM - RAM_BASE)); }
 
