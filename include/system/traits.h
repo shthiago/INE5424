@@ -150,20 +150,20 @@ class SmartData;
 template<typename Transducer, typename Network = TSTP> class Responsive_SmartData;
 template<typename Transducer, typename Network = TSTP> class Interested_SmartData;
 
-// Framework
-class Framework;
-template<typename Component> class Handle;
-template<typename Component, bool remote> class Stub;
-template<typename Component> class Proxy;
-template<typename Component> class Adapter;
-template<typename Component> class Scenario;
-class Agent;
+// // Framework
+// class Framework;
+// template<typename Component> class Handle;
+// template<typename Component, bool remote> class Stub;
+// template<typename Component> class Proxy;
+// template<typename Component> class Adapter;
+// template<typename Component> class Scenario;
+// class Agent;
 
-// Aspects
-class Aspect;
-template<typename Component> class Authenticated;
-template<typename Component> class Shared;
-template<typename Component> class Remote;
+// // Aspects
+// class Aspect;
+// template<typename Component> class Authenticated;
+// template<typename Component> class Shared;
+// template<typename Component> class Remote;
 
 // Configuration Tokens
 struct Traits_Tokens
