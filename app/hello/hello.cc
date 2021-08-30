@@ -1,17 +1,19 @@
 #include <utility/ostream.h>
+#include <syscalls/message.h>
+#include <stubs/thread_stub.h>
 
 using namespace EPOS;
 
 OStream cout;
 
+int print_hello() {
+    cout << "Hello, world!" << endl;
+}
+
 int main()
 {
-    cout << "Hello world!" << endl;
-    
-    int val = 42;
-    CPU::syscall((void*) &val);
+    ThreadAPI t1 = new ThreadAPI(t1);
 
-    cout << "Hello, again!" << endl;
-
+    cout << "Deu boa aqui" << endl;
     return 0;
 }

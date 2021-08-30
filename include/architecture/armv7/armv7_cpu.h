@@ -4,6 +4,7 @@
 #define __armv7_h
 
 #include <architecture/cpu.h>
+#include <syscalls/agent.h>
 
 __BEGIN_SYS
 
@@ -405,32 +406,6 @@ public:
     using Base::Reg;
     using Base::Log_Addr;
     using Base::Phy_Addr;
-
-    class SyscallMessage {
-    public:
-        enum SyscallType {
-            THREAD_EXIT_NO_ARG,
-            THREAD_EXIT_ARG,
-
-            PRINT,
-        }
-        SyscallMessage(const char * text): _text(msg) { }
-
-    SyscallType type() { return _type; }
-    void type(SyscallType type) { _type = type; }
-
-    private:
-        SyscallType _type;
-        const char * _text;
-    }
-
-    class SyscallHandler {
-    public:
-        SyscallHandler(SyscallMessage * msg): _msg(msg) { }
-
-    private:
-        SyscallMessage * _msg 
-    }
 
     // CPU Context
     class Context
