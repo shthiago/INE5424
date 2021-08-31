@@ -25,7 +25,6 @@ public:
                 break;
         }
 
-
         return result;
     }
 

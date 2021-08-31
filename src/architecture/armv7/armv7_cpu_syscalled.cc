@@ -8,5 +8,6 @@ void CPU::syscalled() {
     void* ret = handler.act();
     CPU::r0(reinterpret_cast<Reg>(ret));
     ASM("pop {r1-r12}  \n");
+    db<CPU>(WRN) << "Saindo de CPU::syscalled" << endl;
 }
 __END_SYS

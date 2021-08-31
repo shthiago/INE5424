@@ -2,6 +2,7 @@
 #define __syscall_agent
 
 #include <system.h>
+#include <process.h>
 #include "message.h"
 
 __BEGIN_SYS
@@ -20,10 +21,14 @@ public:
     // void suspend() {  }
     // void resume() {  }
     // static int yield() {  }
-    void exit() { Thread::exit(msg()->integer()); };
+    void exit() { 
+        // _SYS::Thread::exit(msg()->integer());
+    };
     // static volatile bool wait_next() {  }
 
-    void print() { kout << msg()->text(); }
+    void print() {
+        kout << msg()->text();
+    }
 
     SyscallMessage * msg() { return _msg; }
 
