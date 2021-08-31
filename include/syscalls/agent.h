@@ -20,7 +20,7 @@ public:
     // void suspend() {  }
     // void resume() {  }
     // static int yield() {  }
-    void exit();
+    void exit() { Thread::exit(msg()->integer()); };
     // static volatile bool wait_next() {  }
 
     void print() { kout << msg()->text(); }
