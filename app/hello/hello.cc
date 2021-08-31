@@ -1,6 +1,5 @@
 #include <utility/ostream.h>
-#include <syscalls/message.h>
-#include <stubs/thread_stub.h>
+#include <stubs/api_thread.h>
 
 using namespace EPOS;
 
@@ -8,12 +7,17 @@ OStream cout;
 
 int print_hello() {
     cout << "Hello, world!" << endl;
+
+    return 0;
 }
 
 int main()
 {
-    ThreadAPI t1 = new ThreadAPI(t1);
+    cout << "Vou sair agora." << endl;
 
-    cout << "Deu boa aqui" << endl;
+    APIThread::exit(0);
+
+    cout << "Deu ruim, não era pra printar isso não." << endl;
+
     return 0;
 }

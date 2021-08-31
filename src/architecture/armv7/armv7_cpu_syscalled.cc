@@ -1,7 +1,6 @@
-#include <architecture/armv7/armv7_cpu.h>
-#include <utility/ostream.h>
 #include <syscalls/handler.h>
-
+#include <architecture/armv7/armv7_cpu.h>
+#include <process.h>
 __BEGIN_SYS
 void CPU::syscalled() {
     SyscallHandler handler = SyscallHandler(reinterpret_cast<SyscallMessage*>(CPU::r0()));

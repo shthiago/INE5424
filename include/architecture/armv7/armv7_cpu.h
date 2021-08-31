@@ -4,7 +4,6 @@
 #define __armv7_h
 
 #include <architecture/cpu.h>
-#include <syscalls/agent.h>
 
 __BEGIN_SYS
 

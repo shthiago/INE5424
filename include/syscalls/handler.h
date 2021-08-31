@@ -1,11 +1,12 @@
 #ifndef __syscall_handler
 #define __syscall_handler
 
+#include <system.h>
+
 #include "agent.h"
 #include "message.h"
 
 __BEGIN_SYS
-
 class SyscallHandler {
 public:
     SyscallHandler(SyscallMessage * msg): _msg(msg) { }
@@ -19,14 +20,8 @@ public:
                 agent.print();
                 break;
 
-            case CREATE_THREAD_1:
-                // deserializar os argumetnos e jogar pra dentro (???)
-                void * func_ret = agent.create_thread_1();
-                ret = reinterpret_cast<void*>(func_ret);
-                break;
-
-            case THREAD_EXIT_NO_ARG:
             case THREAD_EXIT_ARG:
+                agent.exit();
                 break;
         }
 

@@ -1,8 +1,7 @@
-#ifndef __agent
-#define __agent
+#ifndef __syscall_agent
+#define __syscall_agent
 
-#include <utility/list.h>
-#include <architecture/cpu.h>
+#include <system.h>
 #include "message.h"
 
 __BEGIN_SYS
@@ -10,13 +9,6 @@ __BEGIN_SYS
 class Agent {
 public:
     Agent(SyscallMessage * msg): _msg(msg) {}
-
-    template<typename ... Tn>
-    unsigned long create_thread_1(int (* entry)(Tn ...), Tn ... an) {
-        Thread * t = new Thread(entry, an...);
-        return reinterpret_cast<unsigned long>(t);
-    }
-
     // template<typename ... Tn>
     // void * create_thread(const Configuration & conf, int (* entry)(Tn ...), Tn ... an);
 
@@ -28,12 +20,10 @@ public:
     // void suspend() {  }
     // void resume() {  }
     // static int yield() {  }
-    // static void exit(int r) { }
+    void exit();
     // static volatile bool wait_next() {  }
 
-    void print() {
-        kout << msg()->text();
-    }
+    void print() { kout << msg()->text(); }
 
     SyscallMessage * msg() { return _msg; }
 
@@ -43,4 +33,4 @@ private:
 
 __END_SYS
 
-#endif // !__agent
+#endif // !__syscall_agent
