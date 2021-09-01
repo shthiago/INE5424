@@ -27,7 +27,7 @@ public:
     // static volatile bool wait_next() {  }
 
     void print() {
-        kout << msg()->text();
+        Display::puts(msg()->text());
     }
 
     SyscallMessage * msg() { return _msg; }

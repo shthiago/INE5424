@@ -6,6 +6,7 @@
 #include <memory.h>
 #include <process.h>
 #include <system.h>
+#include <syscalls/message.h>
 
 __BEGIN_SYS
 
@@ -34,5 +35,9 @@ extern "C" {
 
     // Utility-related methods that differ from kernel and user space.
     // OStream
-    void _print(const char * s) { Display::puts(s); }
+    void _print(const char * s) {
+        SyscallMessage msg = SyscallMessage(s);
+        msg.type(PRINT);
+        CPU::syscall(reinterpret_cast<void *>(&msg));
+    }
 }

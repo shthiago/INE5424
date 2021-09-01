@@ -7,10 +7,7 @@ OStream cout;
 
 int main()
 {   
-    const char * hello = "Hello, syscall!\n";
-    SyscallMessage * msg = new SyscallMessage(hello);
-    msg->type(PRINT);
-    CPU::syscall((void*) msg);
+    cout << "Hello, syscall!" << endl;
 
     return 0;
 }
